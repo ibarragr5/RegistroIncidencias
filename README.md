@@ -11,3 +11,9 @@ Solución móvil orientada al registro inmediato de consumos individuales y gast
 - Selector interactivo de categorías mediante componentes `FilterChip`.
 - Contador de registros activos en la sesión actual.
 - Tarjeta dinámica con confirmación estructurada y botón para limpiar el formulario.
+
+## Avance Semana 10: Teclado Contextual e Interacción Táctil
+- Configuración de `KeyboardOptions` con `KeyboardCapitalization.Sentences` y acciones IME (`ImeAction.Next` e `ImeAction.Done`).
+- Gestión de foco y cierre del teclado en pantalla con `LocalFocusManager` y `LocalSoftwareKeyboardController`.
+- Interacción táctil de alto nivel con `Modifier.clickable` para la selección interactiva del método de pago.
+- Retroalimentación dinámica en tiempo real tras eventos táctiles y de escritura.
