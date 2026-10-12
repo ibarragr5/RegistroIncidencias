@@ -17,3 +17,10 @@ Solución móvil orientada al registro inmediato de consumos individuales y gast
 - Gestión de foco y cierre del teclado en pantalla con `LocalFocusManager` y `LocalSoftwareKeyboardController`.
 - Interacción táctil de alto nivel con `Modifier.clickable` para la selección interactiva del método de pago.
 - Retroalimentación dinámica en tiempo real tras eventos táctiles y de escritura.
+
+## Avance Semana 11: Integración Técnica con Sensores (Acelerómetro)
+- Detección de hardware y disponibilidad mediante `SensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)`.
+- Ciclo de vida seguro en Jetpack Compose gestionado con `DisposableEffect` para vincular (`registerListener`) y liberar (`unregisterListener`) el sensor de memoria.
+- Procesamiento continuo de aceleración vectorial en ejes X, Y y Z en m/s² con tasa de refresco `SENSOR_DELAY_UI`.
+- Interpretación dinámica de estabilidad y cálculo euclidiano para clasificar estados: reposo, movimiento moderado o sacudida brusca.
+- Ajuste de interfaz con `statusBarsPadding()` y `navigationBarsPadding()` para compatibilidad visual con bordes de pantalla y cámara frontal.
