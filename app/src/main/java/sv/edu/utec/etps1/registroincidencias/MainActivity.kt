@@ -1,5 +1,10 @@
 package sv.edu.utec.etps1.registroincidencias
 
+import android.content.Context
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
@@ -24,6 +30,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import sv.edu.utec.etps1.registroincidencias.ui.theme.RegistroIncidenciasTheme
+import kotlin.math.sqrt
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,6 +53,11 @@ fun RegistroIncidenciasPreview() {
 
 @Composable
 fun RegistroIncidenciasApp() {
+    val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    // Estados para formulario
     var concepto by remember { mutableStateOf("") }
     var monto by remember { mutableStateOf("") }
     var categoria by remember { mutableStateOf("Comida") }
@@ -54,15 +66,60 @@ fun RegistroIncidenciasApp() {
     var esError by remember { mutableStateOf(false) }
     var totalRegistros by remember { mutableStateOf(0) }
 
+    // Estados y administración del sensor acelerómetro (Semana 11)
+    val sensorManager = remember { context.getSystemService(Context.SENSOR_SERVICE) as SensorManager }
+    val accelerometer = remember { sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) }
+
+    var sensorDisponible by remember { mutableStateOf(accelerometer != null) }
+    var ejeX by remember { mutableStateOf(0f) }
+    var ejeY by remember { mutableStateOf(0f) }
+    var ejeZ by remember { mutableStateOf(0f) }
+    var estadoMovimiento by remember { mutableStateOf("Dispositivo en reposo") }
+
+    // Ciclo de vida controlado: vinculación y liberación del sensor en Compose
+    DisposableEffect(accelerometer) {
+        if (accelerometer == null) {
+            sensorDisponible = false
+            onDispose { }
+        } else {
+            val listener = object : SensorEventListener {
+                override fun onSensorChanged(event: SensorEvent) {
+                    val x = event.values[0]
+                    val y = event.values[1]
+                    val z = event.values[2]
+                    ejeX = x
+                    ejeY = y
+                    ejeZ = z
+
+                    // Magnitud vectorial euclidiana para determinar estabilidad
+                    val magnitud = sqrt((x * x + y * y + z * z).toDouble())
+                    estadoMovimiento = when {
+                        magnitud > 13.5 -> "Movimiento brusco o sacudida"
+                        magnitud > 10.5 -> "En movimiento moderado"
+                        else -> "Dispositivo en reposo estable"
+                    }
+                }
+
+                override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+            }
+
+            sensorManager.registerListener(listener, accelerometer, SensorManager.SENSOR_DELAY_UI)
+
+            onDispose {
+                sensorManager.unregisterListener(listener)
+            }
+        }
+    }
+
     val scrollState = rememberScrollState()
-    val focusManager = LocalFocusManager.current
-    val keyboardController = LocalSoftwareKeyboardController.current
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .statusBarsPadding()
+            .navigationBarsPadding()
             .verticalScroll(scrollState)
-            .padding(24.dp),
+            .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -74,18 +131,56 @@ fun RegistroIncidenciasApp() {
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "Semana 10: Teclado contextual e interacción táctil.",
+            text = "Semana 11: Integración con sensor acelerómetro.",
             style = MaterialTheme.typography.bodyMedium
         )
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         AssistChip(
             onClick = { },
             label = { Text("Gastos anotados en sesión: $totalRegistros") }
         )
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Bloque de monitoreo de sensor en tiempo real (Semana 11)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer
+            )
+        ) {
+            Column(modifier = Modifier.padding(14.dp)) {
+                Text(
+                    text = "Sensor: Acelerómetro (TYPE_ACCELEROMETER)",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+
+                if (sensorDisponible) {
+                    Text(
+                        text = "Valores: X: ${"%.2f".format(ejeX)} | Y: ${"%.2f".format(ejeY)} | Z: ${"%.2f".format(ejeZ)} m/s²",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Estado: $estadoMovimiento",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                } else {
+                    Text(
+                        text = "Acelerómetro físico no disponible en este entorno.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Campo 1: Fuerza apertura del teclado al ganar foco con ImeAction.Next
         OutlinedTextField(
@@ -145,7 +240,7 @@ fun RegistroIncidenciasApp() {
             )
         )
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         Text(
             text = "Categoría:",
@@ -200,7 +295,7 @@ fun RegistroIncidenciasApp() {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 12.dp),
+                            .padding(vertical = 10.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -217,7 +312,7 @@ fun RegistroIncidenciasApp() {
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -237,7 +332,7 @@ fun RegistroIncidenciasApp() {
                                 "• Monto: $$monto\n" +
                                 "• Categoría: $categoria\n" +
                                 "• Pago: $metodoPago\n" +
-                                "• Estado: Procesado y guardado en sesión"
+                                "• Estado dinámico: $estadoMovimiento"
                         esError = false
                     }
                 },
@@ -263,7 +358,7 @@ fun RegistroIncidenciasApp() {
             }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -277,7 +372,7 @@ fun RegistroIncidenciasApp() {
         ) {
             Text(
                 text = mensaje,
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(14.dp),
                 color = if (esError) {
                     MaterialTheme.colorScheme.onErrorContainer
                 } else {
