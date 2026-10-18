@@ -66,7 +66,7 @@ fun RegistroIncidenciasApp() {
     var esError by remember { mutableStateOf(false) }
     var totalRegistros by remember { mutableStateOf(0) }
 
-    // Estados y administración del sensor acelerómetro (Semana 11)
+    // Estados y administración del sensor acelerómetro (Semana 12: Diagnóstico)
     val sensorManager = remember { context.getSystemService(Context.SENSOR_SERVICE) as SensorManager }
     val accelerometer = remember { sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) }
 
@@ -131,7 +131,7 @@ fun RegistroIncidenciasApp() {
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "Semana 11: Integración con sensor acelerómetro.",
+            text = "Semana 12: Diagnóstico del dispositivo.",
             style = MaterialTheme.typography.bodyMedium
         )
 
@@ -144,7 +144,7 @@ fun RegistroIncidenciasApp() {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Bloque de monitoreo de sensor en tiempo real (Semana 11)
+        // Bloque de diagnóstico del dispositivo (Semana 12)
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -153,8 +153,14 @@ fun RegistroIncidenciasApp() {
         ) {
             Column(modifier = Modifier.padding(14.dp)) {
                 Text(
+                    text = "Diagnóstico del dispositivo",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
                     text = "Sensor: Acelerómetro (TYPE_ACCELEROMETER)",
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
                 Spacer(modifier = Modifier.height(6.dp))
@@ -295,7 +301,7 @@ fun RegistroIncidenciasApp() {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 10.dp),
+                            .padding(vertical = 12.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -332,7 +338,7 @@ fun RegistroIncidenciasApp() {
                                 "• Monto: $$monto\n" +
                                 "• Categoría: $categoria\n" +
                                 "• Pago: $metodoPago\n" +
-                                "• Estado dinámico: $estadoMovimiento"
+                                "• Diagnóstico: $estadoMovimiento"
                         esError = false
                     }
                 },
