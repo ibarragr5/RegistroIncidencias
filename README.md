@@ -24,3 +24,9 @@ Solución móvil orientada al registro inmediato de consumos individuales y gast
 - Procesamiento continuo de aceleración vectorial en ejes X, Y y Z en m/s² con tasa de refresco `SENSOR_DELAY_UI`.
 - Interpretación dinámica de estabilidad y cálculo euclidiano para clasificar estados: reposo, movimiento moderado o sacudida brusca.
 - Ajuste de interfaz con `statusBarsPadding()` y `navigationBarsPadding()` para compatibilidad visual con bordes de pantalla y cámara frontal.
+
+- ## Avance Semana 12: Práctica Integradora - Tablero de Diagnóstico
+- Integración de sección visible de diagnóstico de hardware en tiempo real.
+- Verificación preventiva de disponibilidad del acelerómetro físico (`Sensor.TYPE_ACCELEROMETER`).
+- Control estricto del ciclo de vida en Jetpack Compose mediante `DisposableEffect` para registrar (`registerListener`) y liberar recursos (`unregisterListener`).
+- Interpretación contextual del movimiento mediante cálculo de magnitud euclidiana (reposo estable, movimiento moderado o sacudida brusca).
