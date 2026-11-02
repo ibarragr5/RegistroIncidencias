@@ -6,6 +6,7 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
@@ -32,14 +33,43 @@ import androidx.compose.ui.unit.dp
 import sv.edu.utec.etps1.registroincidencias.ui.theme.RegistroIncidenciasTheme
 import kotlin.math.sqrt
 
+// Instrumentación del ciclo de vida (Semana 14: Bitácora del Ciclo de Vida)
 class MainActivity : ComponentActivity() {
+    private val tag = "TPIS1_LIFECYCLE"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d(tag, "onCreate")
         setContent {
             RegistroIncidenciasTheme {
                 RegistroIncidenciasApp()
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        Log.d(tag, "onStart")
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d(tag, "onResume")
+    }
+
+    override fun onPause() {
+        Log.d(tag, "onPause")
+        super.onPause()
+    }
+
+    override fun onStop() {
+        Log.d(tag, "onStop")
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        Log.d(tag, "onDestroy")
+        super.onDestroy()
     }
 }
 
@@ -66,6 +96,7 @@ fun RegistroIncidenciasApp() {
     var esError by remember { mutableStateOf(false) }
     var totalRegistros by remember { mutableStateOf(0) }
 
+    // Estados y administración del sensor acelerómetro (Semana 11)
     // Estados y administración del sensor acelerómetro (Semana 12: Diagnóstico)
     val sensorManager = remember { context.getSystemService(Context.SENSOR_SERVICE) as SensorManager }
     val accelerometer = remember { sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) }
@@ -130,6 +161,7 @@ fun RegistroIncidenciasApp() {
 
         Spacer(modifier = Modifier.height(4.dp))
 
+        // text = "Semana 11: Integración con sensor acelerómetro."
         Text(
             text = "Semana 12: Diagnóstico del dispositivo.",
             style = MaterialTheme.typography.bodyMedium
@@ -144,6 +176,7 @@ fun RegistroIncidenciasApp() {
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // Bloque de monitoreo de sensor en tiempo real (Semana 11)
         // Bloque de diagnóstico del dispositivo (Semana 12)
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -160,7 +193,8 @@ fun RegistroIncidenciasApp() {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "Sensor: Acelerómetro (TYPE_ACCELEROMETER)",
-                    style = MaterialTheme.typography.bodySmall,
+                    // style = MaterialTheme.typography.titleSmall, // Semana 11
+                    style = MaterialTheme.typography.bodySmall, // Semana 12
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
                 Spacer(modifier = Modifier.height(6.dp))
@@ -301,7 +335,8 @@ fun RegistroIncidenciasApp() {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 12.dp),
+                            // .padding(vertical = 10.dp) // Semana 11
+                            .padding(vertical = 12.dp), // Semana 12
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -338,7 +373,8 @@ fun RegistroIncidenciasApp() {
                                 "• Monto: $$monto\n" +
                                 "• Categoría: $categoria\n" +
                                 "• Pago: $metodoPago\n" +
-                                "• Diagnóstico: $estadoMovimiento"
+                                // "• Estado dinámico: $estadoMovimiento\n" + // Semana 11
+                                "• Diagnóstico: $estadoMovimiento" // Semana 12
                         esError = false
                     }
                 },
