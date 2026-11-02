@@ -30,3 +30,8 @@ Solución móvil orientada al registro inmediato de consumos individuales y gast
 - Verificación preventiva de disponibilidad del acelerómetro físico (`Sensor.TYPE_ACCELEROMETER`).
 - Control estricto del ciclo de vida en Jetpack Compose mediante `DisposableEffect` para registrar (`registerListener`) y liberar recursos (`unregisterListener`).
 - Interpretación contextual del movimiento mediante cálculo de magnitud euclidiana (reposo estable, movimiento moderado o sacudida brusca).
+
+- ## Avance Semana 14: Bitácora del Ciclo de Vida
+- Instrumentación de callbacks del ciclo de vida (`onCreate`, `onStart`, `onResume`, `onPause`, `onStop`, `onDestroy`) en `MainActivity`.
+- Depuración y monitoreo de estados en Logcat utilizando el tag `TPIS1_LIFECYCLE`.
+- Registro y análisis de secuencias reales: inicio en frío, suspensión/retorno con Home y finalización de proceso por el sistema (`PROCESS ENDED`).
