@@ -18,6 +18,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
@@ -33,7 +34,7 @@ import androidx.compose.ui.unit.dp
 import sv.edu.utec.etps1.registroincidencias.ui.theme.RegistroIncidenciasTheme
 import kotlin.math.sqrt
 
-// Instrumentación del ciclo de vida (Semana 14: Bitácora del Ciclo de Vida)
+// Instrumentación oficial solicitada para la Semana 14
 class MainActivity : ComponentActivity() {
     private val tag = "TPIS1_LIFECYCLE"
 
@@ -88,16 +89,15 @@ fun RegistroIncidenciasApp() {
     val keyboardController = LocalSoftwareKeyboardController.current
 
     // Estados para formulario
-    var concepto by remember { mutableStateOf("") }
-    var monto by remember { mutableStateOf("") }
+    var concepto by rememberSaveable { mutableStateOf("") } // Semana 15: conserva el texto ante rotación
+    var monto by remember { mutableStateOf("") } // Se mantiene con remember para comparar comportamiento
     var categoria by remember { mutableStateOf("Comida") }
     var metodoPago by remember { mutableStateOf("Efectivo") }
     var mensaje by remember { mutableStateOf("Aún no hay gastos registrados") }
     var esError by remember { mutableStateOf(false) }
     var totalRegistros by remember { mutableStateOf(0) }
 
-    // Estados y administración del sensor acelerómetro (Semana 11)
-    // Estados y administración del sensor acelerómetro (Semana 12: Diagnóstico)
+    // Estados y administración del sensor acelerómetro
     val sensorManager = remember { context.getSystemService(Context.SENSOR_SERVICE) as SensorManager }
     val accelerometer = remember { sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) }
 
@@ -114,7 +114,14 @@ fun RegistroIncidenciasApp() {
             onDispose { }
         } else {
             val listener = object : SensorEventListener {
+                // Limita el redibujado para no saturar el emulador ni bloquear la escritura
+                private var ultimaActualizacionMs = 0L
+
                 override fun onSensorChanged(event: SensorEvent) {
+                    val ahora = System.currentTimeMillis()
+                    if (ahora - ultimaActualizacionMs < 350L) return
+                    ultimaActualizacionMs = ahora
+
                     val x = event.values[0]
                     val y = event.values[1]
                     val z = event.values[2]
@@ -149,6 +156,7 @@ fun RegistroIncidenciasApp() {
             .fillMaxSize()
             .statusBarsPadding()
             .navigationBarsPadding()
+            .imePadding()
             .verticalScroll(scrollState)
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.Center,
@@ -161,7 +169,6 @@ fun RegistroIncidenciasApp() {
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // text = "Semana 11: Integración con sensor acelerómetro."
         Text(
             text = "Semana 12: Diagnóstico del dispositivo.",
             style = MaterialTheme.typography.bodyMedium
@@ -176,8 +183,7 @@ fun RegistroIncidenciasApp() {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Bloque de monitoreo de sensor en tiempo real (Semana 11)
-        // Bloque de diagnóstico del dispositivo (Semana 12)
+        // Bloque de diagnóstico del dispositivo
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -193,8 +199,7 @@ fun RegistroIncidenciasApp() {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "Sensor: Acelerómetro (TYPE_ACCELEROMETER)",
-                    // style = MaterialTheme.typography.titleSmall, // Semana 11
-                    style = MaterialTheme.typography.bodySmall, // Semana 12
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
                 Spacer(modifier = Modifier.height(6.dp))
@@ -335,8 +340,7 @@ fun RegistroIncidenciasApp() {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            // .padding(vertical = 10.dp) // Semana 11
-                            .padding(vertical = 12.dp), // Semana 12
+                            .padding(vertical = 10.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -373,8 +377,7 @@ fun RegistroIncidenciasApp() {
                                 "• Monto: $$monto\n" +
                                 "• Categoría: $categoria\n" +
                                 "• Pago: $metodoPago\n" +
-                                // "• Estado dinámico: $estadoMovimiento\n" + // Semana 11
-                                "• Diagnóstico: $estadoMovimiento" // Semana 12
+                                "• Diagnóstico: $estadoMovimiento"
                         esError = false
                     }
                 },
