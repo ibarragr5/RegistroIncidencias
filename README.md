@@ -35,3 +35,11 @@ Solución móvil orientada al registro inmediato de consumos individuales y gast
 - Instrumentación de callbacks del ciclo de vida (`onCreate`, `onStart`, `onResume`, `onPause`, `onStop`, `onDestroy`) en `MainActivity`.
 - Depuración y monitoreo de estados en Logcat utilizando el tag `TPIS1_LIFECYCLE`.
 - Registro y análisis de secuencias reales: inicio en frío, suspensión/retorno con Home y finalización de proceso por el sistema (`PROCESS ENDED`).
+
+- ## Avance Semana 15: Conservación del Estado en Formulario
+- **Objetivo:** Comprobar cómo responde el estado de la interfaz cuando Android recrea `MainActivity` ante una rotación de pantalla.
+- **Cambios en `MainActivity.kt`:**
+  - Sustitución de `remember` por `rememberSaveable` en `concepto` para conservar su contenido en el `Bundle` del sistema.
+  - Conservación de `remember` en `monto` para comparar ambos mecanismos en una misma pantalla.
+  - Límite de frecuencia en el acelerómetro (350 ms) y `.imePadding()` en el contenedor para mantener estable la escritura.
+- **Resultado comprobado:** Al girar el emulador Pixel 10 Pro XL (API 37.1), `concepto` conservó el dato ingresado y `monto` se reinició vacío.
