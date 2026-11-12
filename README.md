@@ -43,3 +43,9 @@ Solución móvil orientada al registro inmediato de consumos individuales y gast
   - Conservación de `remember` en `monto` para comparar ambos mecanismos en una misma pantalla.
   - Límite de frecuencia en el acelerómetro (350 ms) y `.imePadding()` en el contenedor para mantener estable la escritura.
 - **Resultado comprobado:** Al girar el emulador Pixel 10 Pro XL (API 37.1), `concepto` conservó el dato ingresado y `monto` se reinició vacío.
+
+- ## Avance Semana 16: Estado de Pantalla con ViewModel
+- **Objetivo:** Separar el estado del formulario y sus eventos fuera del composable mediante `RegistroIncidenciasViewModel`.
+- **Estado trasladado al ViewModel:** `concepto`, `monto`, `categoria`, `metodoPago`, `mensaje`, `esError` y `totalRegistros` con propiedades `private set` y funciones de evento (`actualizarConcepto`, `actualizarMonto`, `seleccionarCategoria`, `seleccionarMetodoPago`, `registrarGasto`, `limpiarFormulario`).
+- **Estado conservado en la UI:** Desplazamiento visual (`rememberScrollState()`), controladores de foco/teclado y lecturas instantáneas del acelerómetro.
+- **Resultado comprobado:** Al rotar el emulador, tanto los textos ingresados como las selecciones activas se conservaron intactos sin depender de `rememberSaveable`.
