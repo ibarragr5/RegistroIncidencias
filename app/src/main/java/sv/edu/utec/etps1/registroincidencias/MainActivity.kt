@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,7 +19,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
@@ -31,19 +31,105 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
 import sv.edu.utec.etps1.registroincidencias.ui.theme.RegistroIncidenciasTheme
 import kotlin.math.sqrt
 
-// Instrumentación oficial solicitada para la Semana 14
+// ============================================================================
+// SEMANA 16: Contenedor de estado (ViewModel) separado de la UI
+// Guarda los datos del formulario en memoria y sobrevive a rotaciones de pantalla.
+// ============================================================================
+class RegistroIncidenciasViewModel : ViewModel() {
+
+    // Estados del formulario administrados fuera del composable.
+    // 'private set' permite que la UI lea cada valor, pero obliga a modificarlos
+    // únicamente mediante las funciones de evento definidas abajo.
+    var concepto by mutableStateOf("")
+        private set
+
+    var monto by mutableStateOf("")
+        private set
+
+    var categoria by mutableStateOf("Comida")
+        private set
+
+    var metodoPago by mutableStateOf("Efectivo")
+        private set
+
+    var mensaje by mutableStateOf("Aún no hay gastos registrados")
+        private set
+
+    var esError by mutableStateOf(false)
+        private set
+
+    var totalRegistros by mutableStateOf(0)
+        private set
+
+    // Evento de escritura para el campo Concepto (conectado a onValueChange)
+    fun actualizarConcepto(valor: String) {
+        concepto = valor
+        if (esError) esError = false
+    }
+
+    // Evento de escritura para el campo Monto (conectado a onValueChange)
+    fun actualizarMonto(valor: String) {
+        monto = valor
+        if (esError) esError = false
+    }
+
+    // Evento de selección para los chips de Categoría (conectado a onClick)
+    fun seleccionarCategoria(nuevaCategoria: String) {
+        categoria = nuevaCategoria
+    }
+
+    // Evento de selección para las tarjetas de Método de pago (conectado a clickable)
+    fun seleccionarMetodoPago(nuevoMetodo: String) {
+        metodoPago = nuevoMetodo
+    }
+
+    // Evento de validación y registro: recibe el estado del sensor como texto simple
+    // para que el ViewModel no dependa del contexto ni del hardware del dispositivo.
+    fun registrarGasto(estadoMovimiento: String) {
+        if (concepto.isBlank() || monto.isBlank()) {
+            mensaje = "Advertencia: Ingresa tanto el concepto como el monto gastado."
+            esError = true
+            return
+        }
+
+        totalRegistros++
+        mensaje = "Gasto #$totalRegistros registrado con éxito:\n" +
+                "• Concepto: $concepto\n" +
+                "• Monto: $$monto\n" +
+                "• Categoría: $categoria\n" +
+                "• Pago: $metodoPago\n" +
+                "• Diagnóstico: $estadoMovimiento"
+        esError = false
+    }
+
+    // Evento de reinicio: devuelve los campos y selecciones a su estado inicial
+    fun limpiarFormulario() {
+        concepto = ""
+        monto = ""
+        categoria = "Comida"
+        metodoPago = "Efectivo"
+        mensaje = "Aún no hay gastos registrados"
+        esError = false
+    }
+}
+
+// Instrumentación oficial de la Semana 14 (permite verificar onDestroy -> onCreate en Logcat)
 class MainActivity : ComponentActivity() {
     private val tag = "TPIS1_LIFECYCLE"
+
+    // by viewModels() vincula el ViewModel a la Activity y conserva sus datos al rotar
+    private val vm: RegistroIncidenciasViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(tag, "onCreate")
         setContent {
             RegistroIncidenciasTheme {
-                RegistroIncidenciasApp()
+                RegistroIncidenciasApp(vm = vm)
             }
         }
     }
@@ -59,18 +145,18 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onPause() {
-        Log.d(tag, "onPause")
         super.onPause()
+        Log.d(tag, "onPause")
     }
 
     override fun onStop() {
-        Log.d(tag, "onStop")
         super.onStop()
+        Log.d(tag, "onStop")
     }
 
     override fun onDestroy() {
-        Log.d(tag, "onDestroy")
         super.onDestroy()
+        Log.d(tag, "onDestroy")
     }
 }
 
@@ -78,26 +164,19 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun RegistroIncidenciasPreview() {
     RegistroIncidenciasTheme {
-        RegistroIncidenciasApp()
+        RegistroIncidenciasApp(vm = RegistroIncidenciasViewModel())
     }
 }
 
+// El composable recibe el ViewModel como parámetro para leer estado y enviar eventos
 @Composable
-fun RegistroIncidenciasApp() {
+fun RegistroIncidenciasApp(vm: RegistroIncidenciasViewModel) {
+    // Controladores propios de la vista (pertenecen a la UI, nunca al ViewModel)
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    // Estados para formulario
-    var concepto by rememberSaveable { mutableStateOf("") } // Semana 15: conserva el texto ante rotación
-    var monto by remember { mutableStateOf("") } // Se mantiene con remember para comparar comportamiento
-    var categoria by remember { mutableStateOf("Comida") }
-    var metodoPago by remember { mutableStateOf("Efectivo") }
-    var mensaje by remember { mutableStateOf("Aún no hay gastos registrados") }
-    var esError by remember { mutableStateOf(false) }
-    var totalRegistros by remember { mutableStateOf(0) }
-
-    // Estados y administración del sensor acelerómetro
+    // Estados ligados al hardware del dispositivo en tiempo real (pertenecen a la UI)
     val sensorManager = remember { context.getSystemService(Context.SENSOR_SERVICE) as SensorManager }
     val accelerometer = remember { sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) }
 
@@ -149,6 +228,7 @@ fun RegistroIncidenciasApp() {
         }
     }
 
+    // Estado efímero de desplazamiento visual (pertenece únicamente a la UI)
     val scrollState = rememberScrollState()
 
     Column(
@@ -170,20 +250,21 @@ fun RegistroIncidenciasApp() {
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "Semana 12: Diagnóstico del dispositivo.",
+            text = "Semana 16: Estado de pantalla con ViewModel.",
             style = MaterialTheme.typography.bodyMedium
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // Consume el conteo guardado en el ViewModel
         AssistChip(
             onClick = { },
-            label = { Text("Gastos anotados en sesión: $totalRegistros") }
+            label = { Text("Gastos anotados en sesión: ${vm.totalRegistros}") }
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Bloque de diagnóstico del dispositivo
+        // Bloque de diagnóstico del dispositivo (estado instantáneo de la UI)
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
@@ -227,13 +308,10 @@ fun RegistroIncidenciasApp() {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Campo 1: Fuerza apertura del teclado al ganar foco con ImeAction.Next
+        // Campo 1: Lee vm.concepto y envía eventos de texto con vm::actualizarConcepto
         OutlinedTextField(
-            value = concepto,
-            onValueChange = {
-                concepto = it
-                if (esError) esError = false
-            },
+            value = vm.concepto,
+            onValueChange = vm::actualizarConcepto,
             label = { Text("Concepto del gasto (ej. Almuerzo)") },
             modifier = Modifier
                 .fillMaxWidth()
@@ -242,7 +320,7 @@ fun RegistroIncidenciasApp() {
                         keyboardController?.show()
                     }
                 },
-            isError = esError && concepto.isBlank(),
+            isError = vm.esError && vm.concepto.isBlank(),
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Sentences,
@@ -256,13 +334,10 @@ fun RegistroIncidenciasApp() {
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Campo 2: Fuerza apertura del teclado numérico al ganar foco con ImeAction.Done
+        // Campo 2: Lee vm.monto y envía eventos de texto con vm::actualizarMonto
         OutlinedTextField(
-            value = monto,
-            onValueChange = {
-                monto = it
-                if (esError) esError = false
-            },
+            value = vm.monto,
+            onValueChange = vm::actualizarMonto,
             label = { Text("Monto gastado ($)") },
             modifier = Modifier
                 .fillMaxWidth()
@@ -271,7 +346,7 @@ fun RegistroIncidenciasApp() {
                         keyboardController?.show()
                     }
                 },
-            isError = esError && monto.isBlank(),
+            isError = vm.esError && vm.monto.isBlank(),
             singleLine = true,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Decimal,
@@ -293,6 +368,7 @@ fun RegistroIncidenciasApp() {
             modifier = Modifier.align(Alignment.Start)
         )
 
+        // Chips de categoría: leen vm.categoria y envían la selección al ViewModel
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -301,8 +377,8 @@ fun RegistroIncidenciasApp() {
         ) {
             listOf("Comida", "Transporte", "Servicios", "Ocio").forEach { item ->
                 FilterChip(
-                    selected = categoria == item,
-                    onClick = { categoria = item },
+                    selected = vm.categoria == item,
+                    onClick = { vm.seleccionarCategoria(item) },
                     label = { Text(item) }
                 )
             }
@@ -318,16 +394,17 @@ fun RegistroIncidenciasApp() {
 
         Spacer(modifier = Modifier.height(6.dp))
 
+        // Tarjetas de pago: leen vm.metodoPago y notifican el toque al ViewModel
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             listOf("Efectivo", "Tarjeta").forEach { metodo ->
-                val seleccionado = metodoPago == metodo
+                val seleccionado = vm.metodoPago == metodo
                 Card(
                     modifier = Modifier
                         .weight(1f)
-                        .clickable { metodoPago = metodo },
+                        .clickable { vm.seleccionarMetodoPago(metodo) },
                     colors = CardDefaults.cardColors(
                         containerColor = if (seleccionado) {
                             MaterialTheme.colorScheme.primaryContainer
@@ -359,6 +436,7 @@ fun RegistroIncidenciasApp() {
 
         Spacer(modifier = Modifier.height(14.dp))
 
+        // Botones de acción: cierran el teclado en la UI y delegan la lógica al ViewModel
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -367,19 +445,7 @@ fun RegistroIncidenciasApp() {
                 onClick = {
                     keyboardController?.hide()
                     focusManager.clearFocus()
-                    if (concepto.isBlank() || monto.isBlank()) {
-                        mensaje = "Advertencia: Ingresa tanto el concepto como el monto gastado."
-                        esError = true
-                    } else {
-                        totalRegistros++
-                        mensaje = "Gasto #$totalRegistros registrado con éxito:\n" +
-                                "• Concepto: $concepto\n" +
-                                "• Monto: $$monto\n" +
-                                "• Categoría: $categoria\n" +
-                                "• Pago: $metodoPago\n" +
-                                "• Diagnóstico: $estadoMovimiento"
-                        esError = false
-                    }
+                    vm.registrarGasto(estadoMovimiento)
                 },
                 modifier = Modifier.weight(1f)
             ) {
@@ -390,12 +456,7 @@ fun RegistroIncidenciasApp() {
                 onClick = {
                     keyboardController?.hide()
                     focusManager.clearFocus()
-                    concepto = ""
-                    monto = ""
-                    categoria = "Comida"
-                    metodoPago = "Efectivo"
-                    mensaje = "Aún no hay gastos registrados"
-                    esError = false
+                    vm.limpiarFormulario()
                 },
                 modifier = Modifier.weight(1f)
             ) {
@@ -405,10 +466,11 @@ fun RegistroIncidenciasApp() {
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // Tarjeta de resultado o advertencia controlada desde el ViewModel
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = if (esError) {
+                containerColor = if (vm.esError) {
                     MaterialTheme.colorScheme.errorContainer
                 } else {
                     MaterialTheme.colorScheme.surfaceVariant
@@ -416,9 +478,9 @@ fun RegistroIncidenciasApp() {
             )
         ) {
             Text(
-                text = mensaje,
+                text = vm.mensaje,
                 modifier = Modifier.padding(14.dp),
-                color = if (esError) {
+                color = if (vm.esError) {
                     MaterialTheme.colorScheme.onErrorContainer
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
